@@ -1,4 +1,11 @@
-export function renderPlayground(root: HTMLElement): void {
+import { createCanvasHost } from './createCanvasHost.ts'
+import type { CanvasHost } from './createCanvasHost.ts'
+
+export interface PlaygroundView {
+  readonly canvasHost: CanvasHost
+}
+
+export function renderPlayground(root: HTMLElement): PlaygroundView {
   root.innerHTML = `
     <main class="playground">
       <header class="playground-header">
@@ -7,9 +14,7 @@ export function renderPlayground(root: HTMLElement): void {
       <div class="playground-layout">
         <section class="playground-region workspace" aria-labelledby="workspace-heading">
           <h2 id="workspace-heading">Canvas Workspace</h2>
-          <div class="region-content workspace-content">
-            <p class="placeholder">The canvas workspace is not yet implemented.</p>
-          </div>
+          <div class="region-content workspace-content"></div>
         </section>
         <section class="playground-region controls" aria-labelledby="controls-heading">
           <h2 id="controls-heading">Development Controls</h2>
@@ -26,4 +31,10 @@ export function renderPlayground(root: HTMLElement): void {
       </div>
     </main>
   `
+
+  const workspace = root.querySelector<HTMLElement>('.workspace-content')!
+  const canvasHost = createCanvasHost()
+  workspace.append(canvasHost.element)
+
+  return { canvasHost }
 }

@@ -24,6 +24,23 @@ scrollable diagnostic table).
 Canvas rendering, functional controls, diagnostics, and engine integration are
 deferred to later tasks.
 
+`ui/createCanvasHost.ts` creates an empty, reusable DOM host. Its `element` fills
+the positioned `.workspace-content` container; oversized external content scrolls
+inside the host without expanding the surrounding layout. The host is available
+as `canvasHost` from `initializePlayground(root)` (and `renderPlayground(root)`).
+Keep that reference for the lifetime of the rendered view:
+
+```ts
+const { canvasHost } = initializePlayground(root)
+const surface = document.createElement('div') // Externally managed element.
+canvasHost.element.append(surface)
+surface.remove()
+```
+
+Mounting and removal use native DOM methods and leave the host and layout intact.
+The caller owns the mounted elements and any rendering resources or cleanup.
+The host has no engine dependency, observers, listeners, or rendering lifecycle.
+
 Future engine code must live outside `src/playground` and remain independent of
 this application's DOM, styles, and initialization. The Playground will consume
 the engine's public API through host-side integration composed by `app.ts`.
