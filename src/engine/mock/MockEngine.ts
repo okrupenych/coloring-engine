@@ -1,4 +1,8 @@
 import type {
+  EngineEventListener,
+  EngineEventSource,
+  EngineNotification,
+  EngineSubscription,
   EngineCapabilities,
   EngineCapabilityInspection,
   EngineColor,
@@ -15,10 +19,15 @@ import type {
   EngineStateInspection,
 } from '../contracts'
 
+export type MockFailureOperation = EngineOperation | 'initialize' | 'updateConfiguration' | 'dispose'
+
+/** One-based valid accepted request numbers that fail, independently per operation. */
+export type MockFailureScenarios = Readonly<Partial<Record<MockFailureOperation, readonly number[]>>>
+
 /** Foundational mock: configuration data must support structured cloning. */
 export class MockEngine<TConfiguration extends object = Record<string, never>>
   implements EngineLifecycle<TConfiguration>, EngineConfiguration<TConfiguration>, EngineStateInspection,
-    EngineOperations, EngineCapabilityInspection {
+    EngineOperations, EngineCapabilityInspection, EngineEventSource<EngineNotification<TConfiguration>> {
   #lifecycleState: EngineLifecycleState = 'uninitialized'
   #configuration: Readonly<TConfiguration> | undefined
   #updating = false
@@ -28,10 +37,17 @@ export class MockEngine<TConfiguration extends object = Record<string, never>>
   #coloring: 'initial' | 'changed' | 'undone' = 'initial'
   readonly #capabilities: EngineCapabilities
 
+  readonly #listeners = new Set<{ listener: EngineEventListener<EngineNotification<TConfiguration>> }>()
+  readonly #failures: MockFailureScenarios
+  readonly #attempts: Partial<Record<MockFailureOperation, number>> = {}
+  #disposalStarted = false
+  #notifying = false
+
   constructor(capabilities: EngineCapabilities = {
     tools: ['brush', 'fill'],
     operations: ['selectTool', 'selectColor', 'loadImage', 'reset', 'undo', 'redo'],
-  }) {
+  }, failures: MockFailureScenarios = {}) {
+    this.#failures = structuredClone(failures)
     this.#capabilities = {
       tools: capabilities.operations.includes('selectTool') ? [...capabilities.tools] : [],
       operations: [...capabilities.operations],
@@ -47,17 +63,26 @@ export class MockEngine<TConfiguration extends object = Record<string, never>>
   }
 
   async initialize(configuration: Readonly<TConfiguration>): Promise<EngineOperationResult> {
-    if (this.#lifecycleState !== 'uninitialized') return this.#invalidState()
+    if (this.#notifying || this.#lifecycleState !== 'uninitialized') return this.#invalidState()
     this.#lifecycleState = 'initializing'
+    this.#stateChanged()
     try {
       // Capture input before yielding so callers cannot change the pending value.
       const snapshot = structuredClone(configuration)
       await Promise.resolve()
+      if (this.#shouldFail('initialize')) {
+        this.#lifecycleState = 'failed'
+        this.#stateChanged()
+        return this.#simulatedFailure('initialize')
+      }
       this.#configuration = snapshot
       this.#lifecycleState = 'ready'
+      this.#stateChanged()
+      this.#configurationChanged()
       return { ok: true, value: undefined }
     } catch {
       this.#lifecycleState = 'failed'
+      this.#stateChanged()
       return this.#configurationFailure()
     }
   }
@@ -68,17 +93,21 @@ export class MockEngine<TConfiguration extends object = Record<string, never>>
   }
 
   async updateConfiguration(configuration: Readonly<TConfiguration>): Promise<EngineOperationResult> {
-    if (this.#lifecycleState !== 'ready' || this.#updating) return this.#invalidState()
+    if (this.#notifying || this.#lifecycleState !== 'ready' || this.#updating) return this.#invalidState()
     this.#updating = true
+    this.#stateChanged()
     try {
       const snapshot = structuredClone(configuration)
       await Promise.resolve()
+      if (this.#shouldFail('updateConfiguration')) return this.#simulatedFailure('updateConfiguration')
       this.#configuration = snapshot
+      this.#configurationChanged()
       return { ok: true, value: undefined }
     } catch {
       return this.#configurationFailure()
     } finally {
       this.#updating = false
+      this.#stateChanged()
     }
   }
 
@@ -158,20 +187,20 @@ export class MockEngine<TConfiguration extends object = Record<string, never>>
   async #command(operation: EngineOperation, commit: () => void,
     prepare: () => boolean = () => true): Promise<EngineCommandResult> {
     if (!this.#capabilities.operations.includes(operation)) return this.#unsupported()
-    if (!this.#available(operation)) return this.#invalidState()
+    if (this.#notifying || !this.#available(operation)) return this.#invalidState()
     this.#updating = true
+    this.#stateChanged()
     try {
       // Validate and capture inputs before yielding; only commit after success.
       const valid = prepare()
       await Promise.resolve()
-      if (!valid) return {
-        ok: false,
-        error: { code: 'operation-failed', message: 'Invalid mock operation input.' },
-      }
+      if (!valid) return this.#failure('Invalid mock operation input.')
+      if (this.#shouldFail(operation)) return this.#simulatedFailure(operation)
       commit()
       return { ok: true, value: undefined }
     } finally {
       this.#updating = false
+      this.#stateChanged()
     }
   }
 
@@ -181,17 +210,26 @@ export class MockEngine<TConfiguration extends object = Record<string, never>>
 
   async dispose(): Promise<EngineOperationResult> {
     if (this.#lifecycleState === 'disposed') return { ok: true, value: undefined }
-    if (this.#updating || !['uninitialized', 'ready', 'failed'].includes(this.#lifecycleState)) {
+    if (this.#notifying || this.#updating || !['uninitialized', 'ready', 'failed'].includes(this.#lifecycleState)) {
       return this.#invalidState()
     }
+    this.#disposalStarted = true
     this.#lifecycleState = 'disposing'
+    this.#stateChanged()
     await Promise.resolve()
+    if (this.#shouldFail('dispose')) {
+      this.#lifecycleState = 'failed'
+      this.#stateChanged()
+      return this.#simulatedFailure('dispose')
+    }
     this.#configuration = undefined
     this.#image = undefined
     this.#coloring = 'initial'
     this.#activeTool = null
     this.#selectedColor = null
     this.#lifecycleState = 'disposed'
+    this.#stateChanged()
+    this.#listeners.clear()
     return { ok: true, value: undefined }
   }
 
@@ -203,9 +241,60 @@ export class MockEngine<TConfiguration extends object = Record<string, never>>
   }
 
   #configurationFailure(): { ok: false; error: { code: 'operation-failed'; message: string } } {
-    return {
-      ok: false,
-      error: { code: 'operation-failed', message: 'Configuration could not be copied. Supply structured-cloneable data.' },
+    return this.#failure('Configuration could not be copied. Supply structured-cloneable data.')
+  }
+
+  subscribe(listener: EngineEventListener<EngineNotification<TConfiguration>>): EngineSubscription {
+    if (this.#disposalStarted) return { unsubscribe() {} }
+    const registration = { listener }
+    this.#listeners.add(registration)
+    return { unsubscribe: () => { this.#listeners.delete(registration) } }
+  }
+
+  #emit(event: EngineNotification<TConfiguration>): void {
+    // Snapshot registrations, but check membership before each callback starts.
+    this.#notifying = true
+    try {
+      for (const registration of [...this.#listeners]) {
+        if (!this.#listeners.has(registration)) continue
+        try {
+          registration.listener(structuredClone(event))
+        } catch {
+          // Observers cannot change the request result or interrupt delivery.
+        }
+      }
+    } finally {
+      this.#notifying = false
     }
+  }
+
+  #stateChanged(): void {
+    this.#emit({ type: 'state-changed', timestamp: Date.now(),
+      payload: { lifecycleState: this.#lifecycleState } })
+  }
+
+  #configurationChanged(): void {
+    this.#emit({ type: 'configuration-changed', timestamp: Date.now(), payload: this.#configuration! })
+  }
+
+  #shouldFail(operation: MockFailureOperation): boolean {
+    const attempt = (this.#attempts[operation] ?? 0) + 1
+    this.#attempts[operation] = attempt
+    return this.#failures[operation]?.includes(attempt) ?? false
+  }
+
+  #simulatedFailure(operation: MockFailureOperation) {
+    this.#emit({ type: 'diagnostic', timestamp: Date.now(), payload: {
+      severity: 'info', message: 'Configured mock failure triggered.',
+      details: { operation, attempt: this.#attempts[operation]! },
+    } })
+    return this.#failure('Configured mock operation failure.', { operation, attempt: this.#attempts[operation]! })
+  }
+
+  #failure(message: string, details?: { operation: MockFailureOperation; attempt: number }):
+    { ok: false; error: { code: 'operation-failed'; message: string; details?: typeof details } } {
+    const error = { code: 'operation-failed' as const, message, ...(details ? { details } : {}) }
+    this.#emit({ type: 'error', timestamp: Date.now(), payload: error })
+    return { ok: false, error }
   }
 }
