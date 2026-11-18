@@ -48,6 +48,7 @@
   - **Implemented:** key changes, including important files or modules.
   - **Verification:** the exact type-check/build/manual checks actually performed, with their results; clearly identify anything not checked.
   - **Review notes:** any limitations, deviations, blockers, or known issues; write "None" if none.
+  - **Pull Request:** the full clickable URL of the PR created for this Task (mandatory; do not substitute a branch name or PR number).
 - Do not add a long log dump, reproduce the entire Issue description, claim tests were written or run when they were not, or disclose secrets.
 - Check for an existing equivalent handoff comment before retrying a failed submission; do not publish duplicate reports.
 - Post the comment **only once the work is ready for human review**, not at task start. A successful comment is a prerequisite for moving the Task to `In review`.
@@ -55,4 +56,4 @@
 
 ## Completion report
 
-Summarize in the Codex chat: (1) what changed and where, (2) architectural decisions, (3) commands/checks actually run and their outcomes, (4) any unresolved issues or deviations, (5) the Pull Request URL, (6) the GitHub Issue comment link or posting failure, and (7) the final GitHub Project status. Stop and await review instead of starting another Task.
+Summarize in the Codex chat: (1) what changed and where, (2) architectural decisions, (3) commands/checks actually run and their outcomes, (4) any unresolved issues or deviations, (5) a separate **Pull Request:** line with the full clickable PR URL, (6) the GitHub Issue comment link or posting failure, and (7) the final GitHub Project status. Stop and await review instead of starting another Task.
