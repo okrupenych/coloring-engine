@@ -3,6 +3,7 @@ import type { CanvasHost } from './createCanvasHost.ts'
 
 export interface PlaygroundView {
   readonly canvasHost: CanvasHost
+  dispose(): void
 }
 
 export function renderPlayground(root: HTMLElement): PlaygroundView {
@@ -33,8 +34,7 @@ export function renderPlayground(root: HTMLElement): PlaygroundView {
   `
 
   const workspace = root.querySelector<HTMLElement>('.workspace-content')!
-  const canvasHost = createCanvasHost()
-  workspace.append(canvasHost.element)
+  const canvasHost = createCanvasHost(workspace)
 
-  return { canvasHost }
+  return { canvasHost, dispose: () => canvasHost.dispose() }
 }

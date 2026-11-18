@@ -7,4 +7,8 @@ if (!root) {
   throw new Error('Cannot start the Playground: missing #app element.')
 }
 
-initializePlayground(root)
+const view = initializePlayground(root)
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => view.dispose())
+}
