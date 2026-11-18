@@ -7,10 +7,9 @@ This directory contains the browser host application, not the Coloring Engine li
 - `app.ts` owns application initialization and composes the UI.
 - `ui/` owns DOM rendering, styling, and UI interactions. Rendering receives its
   mount element instead of looking up the application's root globally.
-- `assets/` contains assets used by the Playground UI.
 
-The existing Vite demonstration UI is retained during this structural change;
-its replacement and asset cleanup belong to Task #30.
+The initial screen displays the application name and a workspace placeholder.
+Workspace layout and engine integration will be added in later tasks.
 
 Future engine code must live outside `src/playground` and remain independent of
 this application's DOM, styles, and initialization. The Playground will consume
