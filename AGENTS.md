@@ -17,6 +17,16 @@
 - Do not create speculative placeholder modules or implement features intended for later Tasks.
 - Keep changes small and reviewable. Report any necessary deviation from the issue rather than treating it as implicit authorization.
 
+## Commit and Pull Request naming
+
+- **Use Conventional Commits** for all task implementation commits. Format: `<type>(<scope>): <imperative description> (#<task-number>)`. Write in English, with a concise, meaningful subject (preferably <= 72 characters).
+- Choose the most accurate type for the change: `feat` (new functionality), `fix` (bug fix), `refactor` (behavior-preserving restructuring), `docs` (documentation), or `chore` (maintenance). Other established Conventional Commit types may be used when they better describe the actual change.
+- Choose a clear scope corresponding to the affected module, such as `playground` or `engine`. Describe the **actual changes**, not just the Issue title. Use an imperative description, e.g. `feat(playground): adapt workspace layout for mobile (#32)`.
+- Prefer one cohesive commit for one small Task. Use multiple commits only when they represent meaningful, independently reviewable changes; do not create artificial commits just to separate file types. All task commits must remain within the assigned scope.
+- **Apply the same naming convention to Pull Request titles**: `<type>(<scope>): <imperative description> (#<task-number>)`. Example: `feat(playground): adapt workspace layout for mobile (#32)`.
+- Preserve the explicit `Refs #<task-number>` link in the PR body; the title alone is not a substitute. Do not use `Closes` or `Fixes` because acceptance and Issue closure are human-controlled.
+- Do not rewrite or amend commits that have already been shared, merged, or are under review merely to retrofit this convention. Apply it prospectively from the next Task for which the instructions were loaded.
+
 ## Acceptance Criteria checklist
 
 - **Mandatory during implementation:** keep the assigned Task's `## Acceptance Criteria` checklist in its GitHub Issue body up to date. As soon as a criterion is implemented **and actually verified**, change only its checkbox from `- [ ]` to `- [x]`.
@@ -57,7 +67,7 @@
 - Treat status synchronization as required. If updating Project status fails, disclose the failure and the actual state; do not claim success. Keep already-delivered code and PR intact rather than retrying unsafely.
 - **For each newly assigned Task, use a dedicated Git branch and GitHub Pull Request** (PR; never implement directly on `main`). Start from the latest `main` after confirming the working tree is clean. Use a descriptive branch name such as `task/30-replace-vite-starter`.
 - Before committing, inspect `git status --short`, `git diff`, and the staged file list. Ensure every intended new file is tracked (not merely present locally), and exclude unrelated changes, build output, secrets, and generated artifacts. If unrelated/uncommitted user changes are present, stop and ask rather than deleting, overwriting, or mixing them.
-- After implementation and verification, commit the Task changes on its branch, push that branch, and open one **ready-for-review Pull Request targeting `main`** using `gh pr create`. Include the Issue number in the PR title/body and summarize implementation and checks. Link with `Refs #<number>` or equivalent, not auto-closing keywords like `Closes` or `Fixes`.
+- After implementation and verification, commit the Task changes on its branch, push that branch, and open one **ready-for-review Pull Request targeting `main`** using `gh pr create`. Follow the **Commit and Pull Request naming** rules above; summarize implementation and checks in the PR body and link with `Refs #<number>`, not auto-closing keywords.
 - If the Task already has a PR from an earlier review cycle, update the existing branch/PR instead of creating a duplicate.
 - **Never push directly to `main`**. Final merge, acceptance, and publication to `main` are controlled by the user.
 
