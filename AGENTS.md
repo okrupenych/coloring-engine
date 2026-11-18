@@ -35,11 +35,15 @@
 - These are **GitHub Project status fields**, not GitHub Issue open/closed states.
 - **Never set `Done` or close an Issue without explicit user approval.** Never mark your own work as accepted.
 - Use `gh project item-list` and `gh project field-list` (JSON output) to discover the project item ID, Status field ID, and option ID before using `gh project item-edit`. Do not assume status can be changed using a URL or human-readable option name directly.
-- Do not commit, push, merge, or create pull requests unless specifically instructed. The user controls final review and publication.
+- **For each newly assigned Task, use a dedicated Git branch and GitHub Pull Request** (PR; never implement directly on `main`). Start from the latest `main` after confirming the working tree is clean. Use a descriptive branch name such as `task/30-replace-vite-starter`.
+- Before committing, inspect `git status --short`, `git diff`, and the staged file list. Ensure every intended new file is tracked (not merely present locally), and exclude unrelated changes, build output, secrets, and generated artifacts. If unrelated/uncommitted user changes are present, stop and ask rather than deleting, overwriting, or mixing them.
+- After implementation and verification, commit the Task changes on its branch, push that branch, and open one **ready-for-review Pull Request targeting `main`** using `gh pr create`. Include the Issue number in the PR title/body and summarize implementation and checks. Link with `Refs #<number>` or equivalent, not auto-closing keywords like `Closes` or `Fixes`.
+- If the Task already has a PR from an earlier review cycle, update the existing branch/PR instead of creating a duplicate.
+- **Never push directly to `main`, merge or close a PR, close a GitHub Issue, or set `Done` without explicit user approval.** Final merge, acceptance, and publication to `main` are controlled by the user.
 
 ## GitHub Issue implementation report
 
-- **Mandatory handoff:** before moving the assigned Task to `In review`, post a **short, factual Markdown comment on that Task's GitHub Issue** using `gh issue comment <issue-number> --repo okrupenych/coloring-engine --body ...` (or `--body-file`).
+- **Mandatory handoff:** after pushing the Task branch and opening its Pull Request, and before moving the assigned Task to `In review`, post a **short, factual Markdown comment on that Task's GitHub Issue** using `gh issue comment <issue-number> --repo okrupenych/coloring-engine --body ...` (or `--body-file`). Include the Pull Request URL.
 - Use the following compact structure (normally 5–10 lines total):
   - **Implemented:** key changes, including important files or modules.
   - **Verification:** the exact type-check/build/manual checks actually performed, with their results; clearly identify anything not checked.
@@ -47,8 +51,8 @@
 - Do not add a long log dump, reproduce the entire Issue description, claim tests were written or run when they were not, or disclose secrets.
 - Check for an existing equivalent handoff comment before retrying a failed submission; do not publish duplicate reports.
 - Post the comment **only once the work is ready for human review**, not at task start. A successful comment is a prerequisite for moving the Task to `In review`.
-- If posting fails, do not silently mark the Task `In review`: report the failure and leave the Task `In progress` for manual resolution. Never close the Issue or set `Done`.
+- If the Pull Request cannot be created or the Issue comment cannot be posted, do not mark the Task `In review`: report the failure and leave the Task `In progress` for manual resolution. Never close the Issue or set `Done`.
 
 ## Completion report
 
-Summarize in the Codex chat: (1) what changed and where, (2) architectural decisions, (3) commands/checks actually run and their outcomes, (4) any unresolved issues or deviations, (5) the GitHub Issue comment link or posting failure, and (6) the final GitHub Project status. Stop and await review instead of starting another Task.
+Summarize in the Codex chat: (1) what changed and where, (2) architectural decisions, (3) commands/checks actually run and their outcomes, (4) any unresolved issues or deviations, (5) the Pull Request URL, (6) the GitHub Issue comment link or posting failure, and (7) the final GitHub Project status. Stop and await review instead of starting another Task.
