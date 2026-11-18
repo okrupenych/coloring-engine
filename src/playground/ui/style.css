@@ -17,13 +17,15 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100svh;
   gap: 1.5rem;
-  padding: 2rem;
+  padding: clamp(1rem, 3vw, 2rem);
+  overflow-wrap: anywhere;
 }
 
 h1 {
   margin: 0;
-  font-size: 2rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
   line-height: 1.2;
 }
 
@@ -33,11 +35,12 @@ p {
 
 .playground-layout {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 1fr auto auto;
   grid-template-areas:
-    "workspace controls"
-    "workspace diagnostics";
+    "workspace"
+    "controls"
+    "diagnostics";
   flex: 1;
   gap: 1.5rem;
 }
@@ -62,6 +65,8 @@ p {
 
 .workspace {
   grid-area: workspace;
+  /* Keep the workspace prominent, while allowing content and the page to grow. */
+  min-height: clamp(18rem, 55svh, 40rem);
 }
 
 .controls {
@@ -90,4 +95,26 @@ p {
 
 .placeholder {
   color: #5b6472;
+}
+
+/* Put supporting panels side by side once both have room for readable content. */
+@media (min-width: 40rem) {
+  .playground-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: 1fr auto;
+    grid-template-areas:
+      "workspace workspace"
+      "controls diagnostics";
+  }
+}
+
+/* Reserve a readable sidebar without taking the primary area from the workspace. */
+@media (min-width: 64rem) {
+  .playground-layout {
+    grid-template-columns: minmax(0, 3fr) minmax(16rem, 1fr);
+    grid-template-rows: 1fr 1fr;
+    grid-template-areas:
+      "workspace controls"
+      "workspace diagnostics";
+  }
 }
