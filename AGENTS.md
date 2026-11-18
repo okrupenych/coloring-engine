@@ -30,13 +30,25 @@
 - **Mandatory status synchronization when beginning a Task:** set the assigned Task **and each of its ancestors (parent Story, Feature, and Epic)** to GitHub Project Status `In progress`. This is the only permitted exception to the rule against modifying unrelated issues: change **only the Project Status field** of those exact ancestors.
 - For the assigned Task, transition `Backlog` or `Ready` → `In progress` before implementation. For its parent Story, Feature, and Epic, transition `Backlog` or `Ready` → `In progress` as well; leave any ancestor already `In progress` unchanged.
 - Never automatically move an ancestor backwards from `In review` or `Done`. If an ancestor is already in either state when new work starts, stop the status update for that ancestor and report the inconsistency for user review.
-- After implementation and the required checks, move **only the assigned Task** to `In review` and prepare a clear handoff summary. Keep its Story, Feature, and Epic at `In progress`: a single completed Task does not mean its parent is ready for review. Parent review/completion transitions require separate user direction.
+- After finishing the requested implementation and required checks, **first publish a brief implementation report as a comment on the assigned Task's GitHub Issue**, then move **only that Task** to `In review`. Keep its Story, Feature, and Epic at `In progress`: one reviewed Task does not make its parents ready for review. Parent review/completion transitions require separate user direction.
 - Treat Project status updates as required workflow actions. If a status change fails or the necessary project permissions are missing, report the failure explicitly; never claim the status was updated.
 - These are **GitHub Project status fields**, not GitHub Issue open/closed states.
 - **Never set `Done` or close an Issue without explicit user approval.** Never mark your own work as accepted.
 - Use `gh project item-list` and `gh project field-list` (JSON output) to discover the project item ID, Status field ID, and option ID before using `gh project item-edit`. Do not assume status can be changed using a URL or human-readable option name directly.
 - Do not commit, push, merge, or create pull requests unless specifically instructed. The user controls final review and publication.
 
+## GitHub Issue implementation report
+
+- **Mandatory handoff:** before moving the assigned Task to `In review`, post a **short, factual Markdown comment on that Task's GitHub Issue** using `gh issue comment <issue-number> --repo okrupenych/coloring-engine --body ...` (or `--body-file`).
+- Use the following compact structure (normally 5–10 lines total):
+  - **Implemented:** key changes, including important files or modules.
+  - **Verification:** the exact type-check/build/manual checks actually performed, with their results; clearly identify anything not checked.
+  - **Review notes:** any limitations, deviations, blockers, or known issues; write "None" if none.
+- Do not add a long log dump, reproduce the entire Issue description, claim tests were written or run when they were not, or disclose secrets.
+- Check for an existing equivalent handoff comment before retrying a failed submission; do not publish duplicate reports.
+- Post the comment **only once the work is ready for human review**, not at task start. A successful comment is a prerequisite for moving the Task to `In review`.
+- If posting fails, do not silently mark the Task `In review`: report the failure and leave the Task `In progress` for manual resolution. Never close the Issue or set `Done`.
+
 ## Completion report
 
-Summarize: (1) what changed and where, (2) architectural decisions, (3) commands/checks actually run and their outcomes, (4) any unresolved issues or deviations, and (5) the final GitHub Project status. Stop and await review instead of starting another Task.
+Summarize in the Codex chat: (1) what changed and where, (2) architectural decisions, (3) commands/checks actually run and their outcomes, (4) any unresolved issues or deviations, (5) the GitHub Issue comment link or posting failure, and (6) the final GitHub Project status. Stop and await review instead of starting another Task.
