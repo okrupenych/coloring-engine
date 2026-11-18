@@ -3,7 +3,7 @@
 The manager depends only on engine lifecycle, result, and subscription contracts.
 It orchestrates ownership without importing Mock Engine or UI code. Adapters retain
 responsibility for their lifecycle implementation and resources. Application wiring
-is outside this module: `app.ts` currently only renders the Playground.
+is outside this module: `app.ts` composes the manager and Canvas Workspace consumer.
 
 ## Replacement ordering
 
