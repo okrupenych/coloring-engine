@@ -17,6 +17,15 @@
 - Do not create speculative placeholder modules or implement features intended for later Tasks.
 - Keep changes small and reviewable. Report any necessary deviation from the issue rather than treating it as implicit authorization.
 
+## Acceptance Criteria checklist
+
+- **Mandatory during implementation:** keep the assigned Task's `## Acceptance Criteria` checklist in its GitHub Issue body up to date. As soon as a criterion is implemented **and actually verified**, change only its checkbox from `- [ ]` to `- [x]`.
+- Judge each criterion separately using observable code changes, successful existing build/type-check commands, or the manual/runtime verification appropriate to that criterion. Never check a box based solely on intent, assumption, or an unperformed check. Do not add automated tests just to justify a checkbox.
+- Edit **only checkboxes in the assigned Task's Acceptance Criteria section**. Preserve criterion wording, every other section of the Issue body, and all other Issues. Never tick checkboxes on parent Stories, Features, or Epics.
+- Since GitHub checkbox edits update the Issue body, fetch its latest content before each edit; preserve all unrelated edits and avoid overwriting concurrent changes. Prefer a precise body edit using `gh issue view <number> --repo okrupenych/coloring-engine --json body` and `gh issue edit <number> --repo okrupenych/coloring-engine --body-file <file>`, or an equivalent safe method.
+- If a criterion cannot be verified or is not satisfied, leave it unchecked and clearly explain why in the handoff. Do not report all criteria as complete or move the Task to `In review` while known requirements remain unfulfilled; report the blocker and await direction instead.
+- Before opening the PR and publishing the final Issue report, re-read the Task to confirm that its checklist accurately reflects the implemented and verified work.
+
 ## Verification policy
 
 - **Do not create automated tests, test scaffolding, test frameworks, or new test infrastructure unless explicitly requested.** A plausible benefit alone is not a reason to introduce them.
