@@ -1,4 +1,4 @@
 export { EngineAdapterManager } from './EngineAdapterManager'
 export type {
-  EngineAdapterAccess, EngineAdapterFactory, EngineAdapterManagerState,
+  EngineAdapterAccess, EngineAdapterFactory, EngineAdapterManagerState, EngineAdapterChangeListener,
 } from './EngineAdapterManager'
