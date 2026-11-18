@@ -8,8 +8,13 @@ This directory contains the browser host application, not the Coloring Engine li
 - `ui/` owns DOM rendering, styling, and UI interactions. Rendering receives its
   mount element instead of looking up the application's root globally.
 
-The initial screen displays the application name and a workspace placeholder.
-Workspace layout and engine integration will be added in later tasks.
+The layout in `ui/renderPlayground.ts` provides a primary Canvas Workspace beside
+dedicated Development Controls and Diagnostics regions. Each region has a named
+heading and a `.region-content` container: replace that container's placeholder
+content when adding components without changing the surrounding layout.
+`ui/style.css` owns the grid positioning and visual separation. Responsive
+breakpoints, canvas rendering, functional controls, diagnostics, and engine
+integration are deferred to later tasks.
 
 Future engine code must live outside `src/playground` and remain independent of
 this application's DOM, styles, and initialization. The Playground will consume

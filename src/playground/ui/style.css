@@ -2,23 +2,92 @@
   font-family: system-ui, sans-serif;
   line-height: 1.5;
   color: #242424;
-  background: #fff;
+  background: #f3f4f6;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
 }
 
-main {
+.playground {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  gap: 1.5rem;
   padding: 2rem;
 }
 
 h1 {
-  margin: 0 0 1rem;
+  margin: 0;
   font-size: 2rem;
   line-height: 1.2;
 }
 
 p {
   margin: 0;
+}
+
+.playground-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+  grid-template-rows: 1fr 1fr;
+  grid-template-areas:
+    "workspace controls"
+    "workspace diagnostics";
+  flex: 1;
+  gap: 1.5rem;
+}
+
+.playground-region {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid #cbd0d8;
+  border-radius: 0.5rem;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+
+.playground-region h2 {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e0e3e8;
+  font-size: 1.125rem;
+  line-height: 1.4;
+}
+
+.workspace {
+  grid-area: workspace;
+}
+
+.controls {
+  grid-area: controls;
+}
+
+.diagnostics {
+  grid-area: diagnostics;
+}
+
+.region-content {
+  flex: 1;
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+.workspace-content {
+  display: grid;
+  place-items: center;
+  margin: 1.25rem;
+  border: 1px dashed #b7bec9;
+  border-radius: 0.25rem;
+  background: #f8f9fb;
+  text-align: center;
+}
+
+.placeholder {
+  color: #5b6472;
 }
