@@ -25,7 +25,7 @@ pending. `operation-failed` means an accepted request could not complete. Messag
 are human-readable explanations, not machine-readable identifiers. Expected
 failures use results; unexpected throws/rejections indicate implementation defects
 and should still be handled at an application boundary. These request failures
-do not define the event/error reporting system reserved for Task #37.
+share the public error representation described below.
 
 | Request | Allowed state | Successful outcome | Operational failure |
 | --- | --- | --- | --- |
@@ -108,6 +108,99 @@ export type PublicTypes = [EngineColor, EngineCommandFailure, EngineCommandResul
   EngineRuntimeState]
 ```
 
-Subscriptions and diagnostic events remain reserved for Task #37. There is no
-engine implementation, state manager, rendering dependency, or lifecycle
-orchestration in these modules.
+## Events, errors, and subscriptions
+
+`EngineEvent<Type, Payload>` carries a string type, Unix epoch millisecond
+timestamp, and optional structured payload. `EngineNotification<Config>` is a
+discriminated union of the current notifications:
+
+- `state-changed` invalidates public inspection data and carries the current
+  lifecycle state. Re-read `getState()` while ready and `getCapabilities()` in any
+  state. Emit for lifecycle, selection, availability, and capability changes,
+  including entry to and exit from pending mutations. This reuses the inspection
+  contracts without duplicating their snapshots in events.
+- `configuration-changed` carries the detached committed configuration after
+  initialization or a successful replacement. Failed updates do not emit it.
+- `error` observes an operational failure through `EngineError`. Request results
+  remain authoritative; notifications do not replace results. Consumers observing
+  both channels should avoid reporting the same failure twice.
+- `diagnostic` carries an observational message with `debug`, `info`, `warning`,
+  or `error` severity. Severity alone does not mean an operation failed.
+
+Emit change notifications after public inspection reflects the change. Timestamps
+record occurrence time, not unique IDs or an ordering guarantee. Subscriptions
+do not replay history. Subscribe before initialization to observe its transitions;
+consumers attaching later must read initial public snapshots.
+
+`EngineError<Code>` supplies code, message, and optional `EngineDetails`. Existing
+lifecycle/configuration and command failures keep their exact code unions and
+result semantics. Details are recursively read-only data, never raw exceptions,
+stacks, renderer objects, image buffers, callbacks, or internal handles. Producers
+must sanitize and detach payloads and details. Structural typing cannot enforce
+sanitization or isolation at runtime. Configuration and custom schemas must also
+contain only public data. The envelope's `Readonly` is shallow; nested
+immutability belongs to the schema. Consumers treat all delivered data as immutable.
+
+`EngineEventSource<EventUnion>` preserves type/payload relationships. Extend a
+local union with `EngineEvent<'custom-name', Data>` without changing existing
+types or subscriptions. Generic observers can use the default `EngineEvent`
+envelope and ignore unknown types; validate unknown payloads before using fields.
+Do not add an unrestricted string variant to a discriminated union and assume
+it still narrows. There is no global registry or declaration merging requirement.
+
+Each subscription is a distinct subscriber-owned registration. Call its
+`unsubscribe()` on consumer disposal or adapter replacement, including after
+failed adapter disposal. Release is synchronous and idempotent; no new callbacks
+may start after return, including queued delivery. An executing callback may
+finish. The source releases all listeners on successful disposal after any final
+notification. New subscriptions during or after disposal are inert. Existing
+listeners remain after failed disposal until explicitly released or successfully
+disposed. Listener exceptions must not alter results or block other listeners.
+These are obligations for future adapters, not implemented behavior.
+
+This example composes the same contract for mock and real adapters, with a local
+extension and explicit cleanup:
+
+```ts
+import type { EngineLifecycle } from './lifecycle'
+import type { EngineConfiguration } from './configuration'
+import type { EngineOperations } from './operations'
+import type { EngineCapabilityInspection } from './capabilities'
+import type { EngineStateInspection } from './state'
+import type { EngineEvent, EngineNotification } from './events'
+import type { EngineEventSource, EngineSubscription } from './subscriptions'
+import type { EngineError, EngineDiagnostic } from './errors'
+
+type Config = { readonly background: string }
+type CustomEvent = EngineEvent<'consumer-note', { readonly text: string }>
+type Notifications = EngineNotification<Config> | CustomEvent
+export type Adapter = EngineLifecycle<Config> & EngineConfiguration<Config>
+  & EngineOperations & EngineCapabilityInspection & EngineStateInspection
+  & EngineEventSource<Notifications>
+
+export const note: CustomEvent = { type: 'consumer-note', timestamp: 0 }
+export const failure: EngineError = {
+  code: 'operation-failed', message: 'Unable to complete request',
+  details: { retryable: false },
+}
+export const diagnostic: EngineDiagnostic = { severity: 'info', message: 'Ready' }
+
+export function observe(adapter: Adapter): () => void {
+  const subscription: EngineSubscription = adapter.subscribe(event => {
+    if (event.type === 'state-changed') {
+      adapter.getCapabilities()
+      if (event.payload.lifecycleState === 'ready') adapter.getState()
+    } else if (event.type === 'configuration-changed') {
+      const background: string = event.payload.background
+      void background
+    } else if (event.type === 'error') {
+      const error: EngineError = event.payload
+      void error
+    }
+  })
+  return () => subscription.unsubscribe()
+}
+```
+
+There is no dispatching, logging, engine implementation, rendering dependency,
+state manager, or lifecycle orchestration in these modules.

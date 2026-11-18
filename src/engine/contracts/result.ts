@@ -1,8 +1,8 @@
+import type { EngineError } from './errors'
+
 /** Failure of a lifecycle or configuration request, not a diagnostic event. */
-export interface EngineOperationFailure {
-  readonly code: 'invalid-state' | 'operation-failed'
-  readonly message: string
-}
+export interface EngineOperationFailure
+  extends EngineError<'invalid-state' | 'operation-failed'> {}
 
 /**
  * Success means the operation has completed, not merely been scheduled.
