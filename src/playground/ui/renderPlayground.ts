@@ -1,19 +1,19 @@
-import './style.css'
-import heroImg from './assets/hero.png'
-import typescriptLogo from './assets/typescript.svg'
-import viteLogo from './assets/vite.svg'
+import heroImg from '../assets/hero.png'
+import typescriptLogo from '../assets/typescript.svg'
+import viteLogo from '../assets/vite.svg'
 import { setupCounter } from './counter.ts'
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
+export function renderPlayground(root: HTMLElement): void {
+  root.innerHTML = `
 <section id="center">
   <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
+    <img src="${heroImg}" class="base" width="170" height="179" alt="">
     <img src="${typescriptLogo}" class="framework" alt="TypeScript logo"/>
     <img src="${viteLogo}" class="vite" alt="Vite logo" />
   </div>
   <div>
     <h1>Get started</h1>
-    <p>Edit <code>src/main.ts</code> and save to test <code>HMR</code></p>
+    <p>Edit <code>src/playground/ui/renderPlayground.ts</code> and save to test <code>HMR</code></p>
   </div>
   <button id="counter" type="button" class="counter"></button>
 </section>
@@ -57,4 +57,5 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 <section id="spacer"></section>
 `
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+  setupCounter(root.querySelector<HTMLButtonElement>('#counter')!)
+}
