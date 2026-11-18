@@ -31,15 +31,33 @@ as `canvasHost` from `initializePlayground(root)` (and `renderPlayground(root)`)
 Keep that reference for the lifetime of the rendered view:
 
 ```ts
-const { canvasHost } = initializePlayground(root)
+const view = initializePlayground(root)
+const { canvasHost } = view
+console.log(canvasHost.dimensions) // Initial size, measured after mounting.
+const unsubscribe = canvasHost.subscribe(({ width, height }) => {
+  console.log(width, height)
+})
 const surface = document.createElement('div') // Externally managed element.
 canvasHost.element.append(surface)
 surface.remove()
+unsubscribe()
+view.dispose() // Call before replacing/reinitializing this view.
 ```
 
 Mounting and removal use native DOM methods and leave the host and layout intact.
 The caller owns the mounted elements and any rendering resources or cleanup.
-The host has no engine dependency, observers, listeners, or rendering lifecycle.
+The host has no engine or rendering dependency. `trackContainerDimensions.ts`
+uses one native `ResizeObserver` per host and can also track any HTML container.
+Dimensions are immutable snapshots of the inner width and height in integer CSS
+pixels (including padding, excluding borders and scrollbars), not image resolution.
+Subscriptions receive only changed sizes, including transitions to and from zero.
+Observation starts immediately; `createCanvasHost(parent)` mounts before the first
+measurement. With no parent, a detached host starts at zero and updates after mount.
+Browser resize delivery is asynchronous; the getter retains the latest measured size.
+Unsubscribe and dispose are idempotent. Disposal disconnects observation, clears all
+subscriptions, retains the last size, and makes new subscriptions throw. It leaves
+externally owned DOM intact. Dispose the view before initializing another in the
+same root; the Vite entry point also disposes its view during hot replacement.
 
 Future engine code must live outside `src/playground` and remain independent of
 this application's DOM, styles, and initialization. The Playground will consume
