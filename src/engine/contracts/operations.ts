@@ -1,4 +1,5 @@
 import type { EngineImageInput } from './image'
+import type { EngineError } from './errors'
 import type { EngineOperationFailure, EngineOperationResult } from './result'
 
 /** Opaque identifier obtained from capabilities; no fixed tool catalog is imposed. */
@@ -16,10 +17,8 @@ export type EngineOperation =
   | 'redo'
 
 /** Extends command failures without widening lifecycle/configuration failures. */
-export interface EngineCommandFailure {
-  readonly code: EngineOperationFailure['code'] | 'unsupported-operation'
-  readonly message: string
-}
+export interface EngineCommandFailure
+  extends EngineError<EngineOperationFailure['code'] | 'unsupported-operation'> {}
 
 export type EngineCommandResult = EngineOperationResult<void, EngineCommandFailure>
 
