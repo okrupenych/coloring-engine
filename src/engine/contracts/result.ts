@@ -9,6 +9,6 @@ export interface EngineOperationFailure {
  * Expected failures are returned here, never thrown or rejected.
  * A rejection/throw is an unexpected implementation defect, not a result variant.
  */
-export type EngineOperationResult<T = void> =
+export type EngineOperationResult<T = void, TFailure = EngineOperationFailure> =
   | { readonly ok: true; readonly value: T }
-  | { readonly ok: false; readonly error: EngineOperationFailure }
+  | { readonly ok: false; readonly error: TFailure }
