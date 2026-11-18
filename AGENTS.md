@@ -27,8 +27,11 @@
 ## GitHub Project status and authority
 
 - Project: `okrupenych` / `Coloring Engine` (project number 1).
-- When starting an assigned Task, set its **GitHub Project Status** to `In progress` if permitted.
-- Only after finishing the requested implementation, required checks, and a clear handoff summary, set its Project Status to `In review`. If status changes are unavailable or fail, report that explicitly.
+- **Mandatory status synchronization when beginning a Task:** set the assigned Task **and each of its ancestors (parent Story, Feature, and Epic)** to GitHub Project Status `In progress`. This is the only permitted exception to the rule against modifying unrelated issues: change **only the Project Status field** of those exact ancestors.
+- For the assigned Task, transition `Backlog` or `Ready` → `In progress` before implementation. For its parent Story, Feature, and Epic, transition `Backlog` or `Ready` → `In progress` as well; leave any ancestor already `In progress` unchanged.
+- Never automatically move an ancestor backwards from `In review` or `Done`. If an ancestor is already in either state when new work starts, stop the status update for that ancestor and report the inconsistency for user review.
+- After implementation and the required checks, move **only the assigned Task** to `In review` and prepare a clear handoff summary. Keep its Story, Feature, and Epic at `In progress`: a single completed Task does not mean its parent is ready for review. Parent review/completion transitions require separate user direction.
+- Treat Project status updates as required workflow actions. If a status change fails or the necessary project permissions are missing, report the failure explicitly; never claim the status was updated.
 - These are **GitHub Project status fields**, not GitHub Issue open/closed states.
 - **Never set `Done` or close an Issue without explicit user approval.** Never mark your own work as accepted.
 - Use `gh project item-list` and `gh project field-list` (JSON output) to discover the project item ID, Status field ID, and option ID before using `gh project item-edit`. Do not assume status can be changed using a URL or human-readable option name directly.
